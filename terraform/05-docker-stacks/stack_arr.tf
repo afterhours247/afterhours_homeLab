@@ -17,7 +17,7 @@ resource "null_resource" "arr_scaffolding" {
   }
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p ~/apps/arr/config/sonarr ~/apps/arr/config/radarr ~/apps/arr/config/prowlarr ~/apps/arr/config/qbittorrent ~/apps/arr/config/bazarr ~/apps/arr/config/seerr ~/apps/arr/config/jellyfin ~/apps/arr/config/flaresolverr ~/apps/arr/config/recyclarr ~/apps/arr/config/maintainerr ~/apps/arr/config/suggestarr ~/apps/arr/config/decluttarr"
+      "mkdir -p ~/apps/arr/config/sonarr ~/apps/arr/config/radarr ~/apps/arr/config/prowlarr ~/apps/arr/config/qbittorrent ~/apps/arr/config/bazarr ~/apps/arr/config/seerr ~/apps/arr/config/jellyfin ~/apps/arr/config/flaresolverr ~/apps/arr/config/recyclarr ~/apps/arr/config/maintainerr ~/apps/arr/config/suggestarr ~/apps/arr/config/decluttarr ~/apps/arr/config/chaptarr ~/apps/arr/config/shelfarr"
     ]
   }
 }
@@ -286,6 +286,125 @@ resource "docker_container" "jellyfin" {
   depends_on = [null_resource.arr_scaffolding]
 }
 
+# -------------------------------------------------------------
+# Chaptarr - Audiobook + eBook Collection Manager
+#
+# Web UI:
+#   http://192.168.1.170:8789
+#
+# Storage:
+#   /data/books/downloads
+#   /data/books/audiobooks
+#   /data/books/ebooks
+#
+# qBittorrent:
+#   Category:  chaptarr
+#   Save Path: /data/books/downloads
+# -------------------------------------------------------------
+
+resource "docker_container" "chaptarr" {
+  name    = "chaptarr"
+  image   = "chaptarr/chaptarr:latest"
+  restart = "unless-stopped"
+
+  env = [
+    "PUID=1000",
+    "PGID=1000",
+    "UMASK=002",
+    "TZ=Asia/Manila"
+  ]
+
+  ports {
+    internal = 8789
+    external = 8789
+  }
+
+  # Chaptarr persistent config
+  volumes {
+    host_path      = "/home/afterhours/apps/arr/config/chaptarr"
+    container_path = "/config"
+  }
+
+  # Shared datastore
+  volumes {
+    volume_name    = docker_volume.usb_datastore.name
+    container_path = "/data"
+  }
+
+  networks_advanced {
+    name = data.docker_network.backend.name
+  }
+
+  networks_advanced {
+    name = data.docker_network.frontend.name
+  }
+
+  depends_on = [
+    null_resource.arr_scaffolding,
+    docker_container.qbittorrent,
+    docker_container.prowlarr
+  ]
+}
+
+
+resource "docker_container" "shelfarr" {
+  name    = "shelfarr"
+  image   = "ghcr.io/pedro-revez-silva/shelfarr:latest"
+  restart = "unless-stopped"
+
+  env = [
+    "PUID=1000",
+    "PGID=1000",
+    "TZ=Asia/Manila",
+    "SOLID_QUEUE_IN_PUMA=1",
+    "CHOWN_ON_START=never",
+    "HTTP_PORT=5056"
+  ]
+
+  ports {
+    internal = 5056
+    external = 5056
+  }
+
+  # IMPORTANT:
+  # Shelfarr database, users, settings, secrets, routing rules, etc.
+  volumes {
+    host_path      = "/home/afterhours/apps/arr/config/shelfarr"
+    container_path = "/rails/storage"
+  }
+
+  # Dedicated CIFS view with Shelfarr-compatible permissions
+  volumes {
+    volume_name    = docker_volume.shelfarr_datastore.name
+    container_path = "/data"
+  }
+
+  networks_advanced {
+    name = data.docker_network.backend.name
+  }
+
+  networks_advanced {
+    name = data.docker_network.frontend.name
+  }
+
+  depends_on = [
+    null_resource.arr_scaffolding,
+    docker_container.prowlarr,
+    docker_container.qbittorrent
+  ]
+}
+
+
+resource "docker_volume" "shelfarr_datastore" {
+  name   = "shelfarr_datastore"
+  driver = "local"
+
+  driver_opts = {
+    type   = "cifs"
+    device = "//192.168.1.169/Proxmox-USB"
+    o      = "username=afterhours,password=${var.usb_samba_password},uid=1000,gid=1000,file_mode=0640,dir_mode=0750,vers=3.0,iocharset=utf8"
+  }
+}
 # resource "docker_container" "suggestarr" {
 #   name    = "suggestarr"
 #   image   = "ciuse99/suggestarr:latest"
@@ -305,3 +424,4 @@ resource "docker_container" "jellyfin" {
 #   networks_advanced { name = data.docker_network.frontend.name }
 #   depends_on         = [null_resource.arr_scaffolding]
 # }
+

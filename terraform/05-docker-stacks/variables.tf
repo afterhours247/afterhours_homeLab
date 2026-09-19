@@ -150,3 +150,14 @@ variable "windrose_invite_code" {
   type        = string
   sensitive   = true
 }
+
+variable "stacks_username" {
+  description = "Username for Stacks"
+  type        = string
+}
+
+variable "stacks_password" {
+  description = "Password for Stacks"
+  type        = string
+  sensitive   = true
+}
