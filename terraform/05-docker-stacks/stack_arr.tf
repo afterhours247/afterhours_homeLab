@@ -251,40 +251,40 @@ resource "docker_container" "seerr" {
   depends_on = [null_resource.arr_scaffolding]
 }
 
-resource "docker_container" "jellyfin" {
-  name    = "jellyfin"
-  image   = "lscr.io/linuxserver/jellyfin:latest"
-  restart = "unless-stopped"
-  group_add = ["44", "990"]
-  env     = ["PUID=1000", "PGID=1000", "TZ=Asia/Manila",
-            "DOCKER_MODS=linuxserver/mods:jellyfin-amd"]
-  ports {
-    internal = 8096
-    external = 8096
-  }
-  volumes {
-    host_path      = "/home/afterhours/apps/arr/config/jellyfin"
-    container_path = "/config"
-  }
-  volumes {
-    volume_name    = docker_volume.usb_datastore.name
-    container_path = "/data"
-  }
+# resource "docker_container" "jellyfin" {
+#   name    = "jellyfin"
+#   image   = "lscr.io/linuxserver/jellyfin:latest"
+#   restart = "unless-stopped"
+#   group_add = ["44", "990"]
+#   env     = ["PUID=1000", "PGID=1000", "TZ=Asia/Manila",
+#             "DOCKER_MODS=linuxserver/mods:jellyfin-amd"]
+#   ports {
+#     internal = 8096
+#     external = 8096
+#   }
+#   volumes {
+#     host_path      = "/home/afterhours/apps/arr/config/jellyfin"
+#     container_path = "/config"
+#   }
+#   volumes {
+#     volume_name    = docker_volume.usb_datastore.name
+#     container_path = "/data"
+#   }
   
-  devices {
-    host_path      = "/dev/dri/renderD128"
-    container_path = "/dev/dri/renderD128"
-  }
+#   devices {
+#     host_path      = "/dev/dri/renderD128"
+#     container_path = "/dev/dri/renderD128"
+#   }
 
-  devices {
-    host_path      = "/dev/kfd"
-    container_path = "/dev/kfd"
-  }
+#   devices {
+#     host_path      = "/dev/kfd"
+#     container_path = "/dev/kfd"
+#   }
 
-  networks_advanced { name = data.docker_network.backend.name }
-  networks_advanced { name = data.docker_network.frontend.name }
-  depends_on = [null_resource.arr_scaffolding]
-}
+#   networks_advanced { name = data.docker_network.backend.name }
+#   networks_advanced { name = data.docker_network.frontend.name }
+#   depends_on = [null_resource.arr_scaffolding]
+# }
 
 # -------------------------------------------------------------
 # Chaptarr - Audiobook + eBook Collection Manager
