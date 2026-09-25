@@ -2,6 +2,8 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+*.plan
 crash.log
 *.txt
 
@@ -9,6 +11,7 @@ crash.log
 *.tfvars
 *.tfvars.json
 .env
+.env.*
 *.env
 
 # OS/Editor specific

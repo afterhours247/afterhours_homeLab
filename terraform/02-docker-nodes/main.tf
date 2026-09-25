@@ -5,6 +5,7 @@ resource "proxmox_download_file" "ubuntu_cloud_image" {
   node_name    = "sproxmox01"
   url          = "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
   file_name    = "ubuntu-26.04-cloudimg.iso"
+  overwrite = false
 }
 
 # 1. Define the Cloud-Init configuration text
@@ -68,16 +69,10 @@ resource "proxmox_virtual_environment_vm" "vm-docker01" {
     type  = "host"#"x86-64-v2-AES"
   }
 
-  hostpci {
-    device = "hostpci0"
-    mapping = "amd_igpu"
-    pcie = true
-    rombar = true
-
-  }
+  
 
   memory {
-    dedicated = 16384 # 16GB RAM
+    dedicated = 8192 # 8GB RAM
   }
 
   agent {

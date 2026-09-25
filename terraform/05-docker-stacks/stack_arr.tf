@@ -425,3 +425,23 @@ resource "docker_volume" "shelfarr_datastore" {
 #   depends_on         = [null_resource.arr_scaffolding]
 # }
 
+resource "docker_container" "jellyfin_proxy" {
+  name    = "jellyfin"
+  image   = "caddy:2-alpine"
+  restart = "unless-stopped"
+
+  command = [
+  "caddy",
+  "reverse-proxy",
+  "--from", ":8096",
+  "--to", "http://192.168.1.174:8096"
+]
+
+  networks_advanced {
+    name = data.docker_network.backend.name
+  }
+
+  networks_advanced {
+    name = data.docker_network.frontend.name
+  }
+}

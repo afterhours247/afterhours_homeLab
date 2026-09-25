@@ -16,7 +16,8 @@ resource "proxmox_virtual_environment_container" "lxc_jellyfin01" {
   lifecycle {
     ignore_changes = [
       features,
-      mount_point
+      mount_point,
+      device_passthrough
     ]
   }
 
@@ -36,7 +37,7 @@ resource "proxmox_virtual_environment_container" "lxc_jellyfin01" {
 
   disk {
     datastore_id = "local-lvm"
-    size         = 20
+    size         = 10
   }
 
   # LAN
@@ -206,8 +207,43 @@ resource "docker_container" "jellyfin" {
     read_only      = true
   }
 
+  devices {
+    host_path      = "/dev/dri/renderD128"
+    container_path = "/dev/dri/renderD128"
+  }
+
   depends_on = [
     docker_image.jellyfin,
-    null_resource.jellyfin_media_mount
+    null_resource.jellyfin_media_mount,
+    null_resource.jellyfin_gpu_device
   ]
+}
+
+resource "null_resource" "jellyfin_gpu_device" {
+  depends_on = [
+    null_resource.jellyfin_lxc_features
+  ]
+
+  triggers = {
+    device = "/dev/dri/renderD128"
+    gid    = "1000"
+    mode   = "0660"
+  }
+
+  connection {
+    type        = "ssh"
+    host        = "192.168.1.169" # sproxmox01
+    user        = "root"
+    private_key = file("~/.ssh/id_ed25519")
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "test -c /dev/dri/renderD128",
+      "pct set 202 -dev0 /dev/dri/renderD128,gid=1000,mode=0660",
+      "pct reboot 202",
+      "until pct exec 202 -- test -c /dev/dri/renderD128; do sleep 2; done",
+      "pct exec 202 -- stat -c '%U:%G %u:%g %a %n' /dev/dri/renderD128"
+    ]
+  }
 }
