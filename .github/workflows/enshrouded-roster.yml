@@ -1,0 +1,21 @@
+name: Enshrouded roster
+on:
+  pull_request:
+    paths:
+      - 'pelican-plugins/enshrouded-roster/**'
+      - '.github/workflows/enshrouded-roster.yml'
+  push:
+    paths:
+      - 'pelican-plugins/enshrouded-roster/**'
+      - '.github/workflows/enshrouded-roster.yml'
+permissions:
+  contents: read
+jobs:
+  parser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint PHP
+        run: find pelican-plugins/enshrouded-roster -name '*.php' -not -path '*/resources/*' -exec php -l {} \;
+      - name: Test roster parsing
+        run: php pelican-plugins/enshrouded-roster/tests/parser.php
