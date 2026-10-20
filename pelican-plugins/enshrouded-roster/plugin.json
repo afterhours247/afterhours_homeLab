@@ -1,0 +1,13 @@
+{
+  "id": "enshrouded-roster",
+  "name": "Enshrouded Roster",
+  "author": "Afterhours",
+  "version": "1.0.1",
+  "description": "Read-only Enshrouded player names from current-session logs, checked against live A2S count.",
+  "category": "plugin",
+  "namespace": "Afterhours\\EnshroudedRoster",
+  "class": "EnshroudedRosterPlugin",
+  "panels": ["server"],
+  "api_version": 1,
+  "composer_packages": {"xpaw/php-source-query-class": "^6.0.0"}
+}
